@@ -8,13 +8,11 @@ import numpy as np
 
 
 def prediction(img_grey, model):
+    img_grey=cv2.resize(img_grey, (28, 28), interpolation=cv2.INTER_LINEAR)
 
     original_shape = img_grey.shape
-    print(f"Original shape: {original_shape}")
 
-
-    if original_shape != (28, 28):
-        raise ValueError("Invalid shape for img_grey. Expected (28, 28)")
+    img = cv2.bitwise_not(img_grey)
 
 
     img = img_grey / 255.0
@@ -40,7 +38,7 @@ WIDTH = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 HEIGHT = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 
-bbox_size = (28, 28)
+bbox_size = (60, 60)
 
 while True:
     _, frame = cap.read()
