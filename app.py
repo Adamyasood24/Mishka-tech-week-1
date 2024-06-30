@@ -1,41 +1,77 @@
-# Function to preprocess the image
+
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+model = load_model('C:/Users/sooda/Desktop/dev/New folder/Mishka-tech-internship/mnist1.h5')
 
-# Load the MNIST model
-model = load_model('C:/Users/sooda/Desktop/dev/New folder/Mishka-tech-internship/mnist.h5')
-
-def preprocess_image(image_path):
-    # Read the image using OpenCV
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-    # Apply Gaussian blur to the image
+import numpy as np
 
 
-    # Resize the image to 28x28 (MNIST input size)
-    image = cv2.resize(image, (28, 28))
+def prediction(img_grey, model):
 
-    #image = cv2.GaussianBlur(image, (5, 5), 0)
+    original_shape = img_grey.shape
+    print(f"Original shape: {original_shape}")
 
-    # Normalize the image pixels to be between 0 and 1
-    #image = image / 255.0
 
-    # Reshape the image to match the model's input shape
-    image = image.reshape((1, 784))
+    if original_shape != (28, 28):
+        raise ValueError("Invalid shape for img_grey. Expected (28, 28)")
 
-    return image
 
-# Get the image path from the user
-image_path = input("Enter the path to the image file: ")
+    img = img_grey / 255.0
 
-# Preprocess the image
-image = preprocess_image(image_path)
 
-# Make predictions using the model
-predictions = model.predict(image)
+    img = img.reshape((1, 784))
 
-# Get the predicted digit
-predicted_digit = np.argmax(predictions)
 
-print("Predicted digit:", predicted_digit)
+    predict = model.predict(img)
+
+
+    prob = np.amax(predict)
+
+
+    result = np.argmax(predict)
+
+    return result, prob
+
+cap = cv2.VideoCapture(0 + cv2.CAP_DSHOW)
+
+
+WIDTH = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+HEIGHT = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+
+bbox_size = (28, 28)
+
+while True:
+    _, frame = cap.read()
+
+
+    frame_copy = frame.copy()
+
+    x1 = int(WIDTH // 2 - bbox_size[0] // 2)
+    y1 = int(HEIGHT // 2 - bbox_size[1] // 2)
+    x2 = int(WIDTH // 2 + bbox_size[0] // 2)
+    y2 = int(HEIGHT // 2 + bbox_size[1] // 2)
+    bbox = [(x1, y1), (x2, y2)]
+
+
+    img_c = frame[y1:y2, x1:x2]
+
+
+    img_grey = cv2.cvtColor(img_c, cv2.COLOR_BGR2GRAY)
+
+
+    cv2.imshow("cropped", img_grey)
+    result , probability = prediction(img_grey, model)
+    cv2.putText(frame_copy, f"prediction: {result}", (40, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,255),2 ,cv2.LINE_AA)
+    cv2.putText(frame_copy, "probability: "+"{:.2f}".format(probability), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,0,255),2 ,cv2.LINE_AA, )
+    cv2.rectangle(frame_copy, bbox[0],bbox[1],(0, 255, 0), 3)
+    cv2.imshow("input", frame_copy)
+
+
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
+
+
+cv2.destroyAllWindows()
+cap.release()
